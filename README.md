@@ -1,1 +1,380 @@
 # emom-timer
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMOM Superset Timer</title>
+  <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiRU1PTSBTdXBlcnNldCBUaW1lciIsInNob3J0X25hbWUiOiJFTU9NIiwic3RhcnRfdXJsIjoiLi8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIcontentiYmFja2dyb3VuZF9jb2xvciI6IiMwZjE3MmEiLCJ0aGVtZV9jb2xvciI6IiMwZjE3MmEifQ==" />
+  <meta name="theme-color" content="#0f172a" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --work: #22c55e;
+      --rest: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .container {
+      background: var(--card);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 0.75rem; color: var(--accent); }
+    .preset-section { margin-bottom: 1rem; text-align: left; }
+    .preset-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
+    .chip {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: var(--accent);
+      padding: 0.35rem 0.6rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+    .input-group { display: flex; flex-direction: column; }
+    label { font-size: 0.7rem; text-transform: uppercase; color: var(--muted); margin-bottom: 0.2rem; font-weight: 600; }
+    input {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 0.4rem 0.6rem;
+      border-radius: 0.4rem;
+      font-size: 0.9rem;
+    }
+    .display {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #0f172a;
+      border-radius: 0.75rem;
+      border: 2px solid #334155;
+    }
+    .display.resting { border-color: var(--rest); }
+    .display.working { border-color: var(--work); }
+    .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 1rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      background: #334155;
+    }
+    .status-badge.work { background: rgba(34, 197, 94, 0.2); color: var(--work); }
+    .status-badge.rest { background: rgba(245, 158, 11, 0.2); color: var(--rest); }
+    .timer { font-size: 4rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+    .round-info { font-size: 1rem; color: var(--muted); margin-top: 0.4rem; }
+    .current-task { margin-top: 0.5rem; font-size: 1.1rem; font-weight: 700; color: var(--work); }
+    .current-task.rest-mode { color: var(--rest); }
+    .stats { display: flex; justify-content: space-around; margin-bottom: 1rem; font-size: 0.85rem; color: var(--muted); }
+    .stats span { color: var(--text); font-weight: 700; }
+    .controls { display: flex; gap: 0.5rem; }
+    button.btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-start { background: var(--work); color: #052e16; }
+    .btn-pause { background: var(--rest); color: #451a03; }
+    .btn-reset { background: var(--danger); color: #450a0a; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>EMOM Superset Timer</h1>
+
+  <div class="preset-section">
+    <label>Quick Presets</label>
+    <div class="preset-chips">
+      <button class="chip" onclick="loadPreset('Pull-ups', 5, 'Push-ups', 10)">Nickels & Dimes</button>
+      <button class="chip" onclick="loadPreset('Chin-ups', 4, 'Dips', 8)">Chins & Dips</button>
+      <button class="chip" onclick="loadPreset('Inverted Rows', 8, 'Push-ups', 12)">Rows & Push</button>
+      <button class="chip" onclick="loadPreset('Squats', 10, 'Lunges', 10)">Legs (10/10)</button>
+    </div>
+  </div>
+
+  <div class="inputs-grid">
+    <div class="input-group">
+      <label for="ex1-name">Move 1 (Pull)</label>
+      <input type="text" id="ex1-name" value="Pull-ups" />
+    </div>
+    <div class="input-group">
+      <label for="ex1-reps">Reps</label>
+      <input type="number" id="ex1-reps" value="5" min="1" />
+    </div>
+    <div class="input-group">
+      <label for="ex2-name">Move 2 (Push)</label>
+      <input type="text" id="ex2-name" value="Push-ups" />
+    </div>
+    <div class="input-group">
+      <label for="ex2-reps">Reps</label>
+      <input type="number" id="ex2-reps" value="10" min="1" />
+    </div>
+    <div class="input-group">
+      <label for="interval-sec">Interval (Sec)</label>
+      <input type="number" id="interval-sec" value="60" min="10" />
+    </div>
+    <div class="input-group">
+      <label for="total-rounds">Total Rounds</label>
+      <input type="number" id="total-rounds" value="20" min="1" />
+    </div>
+    <div class="input-group">
+      <label for="block-frequency">Rest Every (Rounds)</label>
+      <input type="number" id="block-frequency" value="5" min="0" />
+    </div>
+    <div class="input-group">
+      <label for="block-rest-sec">Rest Duration (Sec)</label>
+      <input type="number" id="block-rest-sec" value="60" min="0" />
+    </div>
+  </div>
+
+  <div class="display" id="display-box">
+    <span class="status-badge" id="status-badge">READY</span>
+    <div class="timer" id="timer">01:00</div>
+    <div class="round-info" id="round-text">Round: 0 / 20</div>
+    <div class="current-task" id="task-text">Select options and hit Start</div>
+  </div>
+
+  <div class="stats">
+    <div>Total <span id="stat-ex1-name">Pull-ups</span>: <span id="stat-ex1-count">0</span></div>
+    <div>Total <span id="stat-ex2-name">Push-ups</span>: <span id="stat-ex2-count">0</span></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-start" id="start-btn">Start</button>
+    <button class="btn btn-pause" id="pause-btn" style="display: none;">Pause</button>
+    <button class="btn btn-reset" id="reset-btn">Reset</button>
+  </div>
+</div>
+
+<script>
+  // Dynamic inline Service Worker registration via Blob (no external sw.js file needed)
+  if ('serviceWorker' in navigator) {
+    const swCode = "self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => e.waitUntil(clients.claim())); self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));";
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+  }
+
+  // Wake Lock
+  let wakeLock = null;
+  async function activateWakeLock() {
+    try {
+      if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+    } catch (e) {}
+  }
+  function releaseWakeLock() {
+    if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  }
+
+  let timerInterval = null;
+  let remainingSeconds = 60;
+  let currentRound = 0;
+  let isRunning = false;
+  let isBlockRest = false;
+
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  function beep(freq = 600, duration = 0.15) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+
+  function loadPreset(name1, reps1, name2, reps2) {
+    if (isRunning) return;
+    document.getElementById('ex1-name').value = name1;
+    document.getElementById('ex1-reps').value = reps1;
+    document.getElementById('ex2-name').value = name2;
+    document.getElementById('ex2-reps').value = reps2;
+    updateDisplay();
+  }
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function updateDisplay() {
+    document.getElementById('timer').textContent = formatTime(remainingSeconds);
+    const totalRounds = parseInt(document.getElementById('total-rounds').value, 10) || 0;
+    const badge = document.getElementById('status-badge');
+    const taskText = document.getElementById('task-text');
+    const displayBox = document.getElementById('display-box');
+
+    const ex1 = document.getElementById('ex1-name').value;
+    const r1 = parseInt(document.getElementById('ex1-reps').value, 10) || 0;
+    const ex2 = document.getElementById('ex2-name').value;
+    const r2 = parseInt(document.getElementById('ex2-reps').value, 10) || 0;
+
+    document.getElementById('stat-ex1-name').textContent = ex1;
+    document.getElementById('stat-ex2-name').textContent = ex2;
+    document.getElementById('stat-ex1-count').textContent = Math.max(0, currentRound * r1);
+    document.getElementById('stat-ex2-count').textContent = Math.max(0, currentRound * r2);
+
+    if (!isRunning && currentRound === 0) {
+      badge.textContent = 'READY';
+      badge.className = 'status-badge';
+      displayBox.className = 'display';
+      taskText.textContent = 'Select options and hit Start';
+      taskText.className = 'current-task';
+      document.getElementById('round-text').textContent = `Round: 0 / ${totalRounds}`;
+      return;
+    }
+
+    document.getElementById('round-text').textContent = `Round: ${currentRound} / ${totalRounds}`;
+
+    if (isBlockRest) {
+      badge.textContent = 'BLOCK REST';
+      badge.className = 'status-badge rest';
+      displayBox.className = 'display resting';
+      taskText.textContent = 'Recover & Hydrate';
+      taskText.className = 'current-task rest-mode';
+    } else {
+      badge.textContent = 'WORK';
+      badge.className = 'status-badge work';
+      displayBox.className = 'display working';
+      taskText.textContent = `${r1} ${ex1} + ${r2} ${ex2}`;
+      taskText.className = 'current-task';
+    }
+  }
+
+  function tick() {
+    remainingSeconds--;
+    if (remainingSeconds <= 3 && remainingSeconds > 0) beep(440, 0.1);
+
+    if (remainingSeconds < 0) {
+      const totalRounds = parseInt(document.getElementById('total-rounds').value, 10) || 0;
+      const blockFreq = parseInt(document.getElementById('block-frequency').value, 10) || 0;
+      const blockRestSec = parseInt(document.getElementById('block-rest-sec').value, 10) || 0;
+      const intervalSec = parseInt(document.getElementById('interval-sec').value, 10) || 60;
+
+      if (isBlockRest) {
+        isBlockRest = false;
+        currentRound++;
+        remainingSeconds = intervalSec;
+        beep(880, 0.3);
+      } else {
+        if (currentRound >= totalRounds) {
+          completeWorkout();
+          return;
+        }
+        if (blockFreq > 0 && currentRound % blockFreq === 0 && blockRestSec > 0) {
+          isBlockRest = true;
+          remainingSeconds = blockRestSec;
+          beep(600, 0.4);
+        } else {
+          currentRound++;
+          remainingSeconds = intervalSec;
+          beep(880, 0.3);
+        }
+      }
+    }
+    updateDisplay();
+  }
+
+  function startTimer() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    activateWakeLock();
+    const intervalSec = parseInt(document.getElementById('interval-sec').value, 10) || 60;
+
+    if (!isRunning) {
+      isRunning = true;
+      if (currentRound === 0) {
+        currentRound = 1;
+        remainingSeconds = intervalSec;
+        beep(880, 0.3);
+      }
+      timerInterval = setInterval(tick, 1000);
+      document.getElementById('start-btn').style.display = 'none';
+      document.getElementById('pause-btn').style.display = 'block';
+      updateDisplay();
+    }
+  }
+
+  function pauseTimer() {
+    isRunning = false;
+    clearInterval(timerInterval);
+    releaseWakeLock();
+    document.getElementById('start-btn').style.display = 'block';
+    document.getElementById('pause-btn').style.display = 'none';
+  }
+
+  function resetTimer() {
+    isRunning = false;
+    clearInterval(timerInterval);
+    releaseWakeLock();
+    currentRound = 0;
+    isBlockRest = false;
+    remainingSeconds = parseInt(document.getElementById('interval-sec').value, 10) || 60;
+    document.getElementById('start-btn').style.display = 'block';
+    document.getElementById('pause-btn').style.display = 'none';
+    updateDisplay();
+  }
+
+  function completeWorkout() {
+    isRunning = false;
+    clearInterval(timerInterval);
+    releaseWakeLock();
+    document.getElementById('task-text').textContent = 'Workout Complete!';
+    document.getElementById('status-badge').textContent = 'FINISHED';
+    document.getElementById('status-badge').className = 'status-badge work';
+    document.getElementById('start-btn').style.display = 'block';
+    document.getElementById('pause-btn').style.display = 'none';
+    beep(1000, 0.6);
+  }
+
+  document.getElementById('start-btn').addEventListener('click', startTimer);
+  document.getElementById('pause-btn').addEventListener('click', pauseTimer);
+  document.getElementById('reset-btn').addEventListener('click', resetTimer);
+
+  ['ex1-name', 'ex2-name', 'ex1-reps', 'ex2-reps', 'total-rounds', 'interval-sec'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      if (!isRunning && currentRound === 0) {
+        remainingSeconds = parseInt(document.getElementById('interval-sec').value, 10) || 60;
+        updateDisplay();
+      }
+    });
+  });
+
+  resetTimer();
+</script>
+</body>
+</html>
