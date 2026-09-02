@@ -1,9 +1,8 @@
-# emom-timer
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>EMOM Superset Timer</title>
   <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiRU1PTSBTdXBlcnNldCBUaW1lciIsInNob3J0X25hbWUiOiJFTU9NIiwic3RhcnRfdXJsIjoiLi8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIcontentiYmFja2dyb3VuZF9jb2xvciI6IiMwZjE3MmEiLCJ0aGVtZV9jb2xvciI6IiMwZjE3MmEifQ==" />
   <meta name="theme-color" content="#0f172a" />
@@ -18,7 +17,343 @@
       --rest: #f59e0b;
       --danger: #ef4444;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100dvh;
+      padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+    }
+    .container {
+      background: var(--card);
+      border-radius: 1.25rem;
+      padding: clamp(0.85rem, 3.5vw, 1.5rem);
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      text-align: center;
+      margin: auto;
+    }
+    h1 { 
+      font-size: clamp(1.2rem, 4.5vw, 1.4rem); 
+      margin-bottom: 0.6rem; 
+      color: var(--accent); 
+    }
+    
+    .preset-section { 
+      margin-bottom: 0.75rem; 
+      text-align: left; 
+    }
+    .preset-section label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .preset-chips { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem; 
+      margin-top: 0.25rem; 
+    }
+    .chip {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: var(--accent);
+      padding: 0.4rem 0.2rem;
+      border-radius: 0.45rem;
+      font-size: 0.72rem;
+      cursor: pointer;
+      font-weight: 600;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chip:active {
+      background: var(--accent);
+      color: #0f172a;
+    }
+
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+      text-align: left;
+    }
+    .input-group { 
+      display: flex; 
+      flex-direction: column; 
+    }
+    label { 
+      font-size: 0.62rem; 
+      text-transform: uppercase; 
+      color: var(--muted); 
+      margin-bottom: 0.15rem; 
+      font-weight: 700; 
+      letter-spacing: 0.04em;
+    }
+    input {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 0.4rem 0.5rem;
+      border-radius: 0.4rem;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+    input:focus {
+      outline: 2px solid var(--accent);
+      border-color: transparent;
+    }
+
+    .display {
+      margin: 0.65rem 0;
+      padding: 0.75rem 0.5rem;
+      background: #0f172a;
+      border-radius: 0.75rem;
+      border: 2px solid #334155;
+      transition: border-color 0.25s ease;
+    }
+    .display.resting { border-color: var(--rest); }
+    .display.working { border-color: var(--work); }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.15rem 0.55rem;
+      border-radius: 1rem;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.2rem;
+      background: #334155;
+    }
+    .status-badge.work { background: rgba(34, 197, 94, 0.18); color: var(--work); }
+    .status-badge.rest { background: rgba(245, 158, 11, 0.18); color: var(--rest); }
+
+    .timer { 
+      font-size: clamp(3rem, 14vw, 4rem); 
+      font-weight: 800; 
+      font-variant-numeric: tabular-nums; 
+      line-height: 1; 
+      margin: 0.15rem 0;
+    }
+    .round-info { 
+      font-size: clamp(0.85rem, 3.2vw, 1rem); 
+      color: var(--muted); 
+    }
+    .current-task { 
+      margin-top: 0.35rem; 
+      font-size: clamp(0.95rem, 3.5vw, 1.15rem); 
+      font-weight: 700; 
+      color: var(--work); 
+      min-height: 1.4em;
+    }
+    .current-task.rest-mode { color: var(--rest); }
+
+    .stats { 
+      display: flex; 
+      justify-content: space-around; 
+      margin-bottom: 0.75rem; 
+      font-size: clamp(0.72rem, 2.8vw, 0.82rem); 
+      color: var(--muted); 
+      background: rgba(15, 23, 42, 0.5);
+      padding: 0.4rem;
+      border-radius: 0.45rem;
+    }
+    .stats span { color: var(--text); font-weight: 700; }
+
+    .controls { 
+      display: flex; 
+      gap: 0.45rem; 
+    }
+    button.btn {
+      flex: 1;
+      padding: 0.65rem 0.4rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .btn-start { background: var(--work); color: #052e16; }
+    .btn-pause { background: var(--rest); color: #451a03; }
+    .btn-reset { background: var(--danger); color: #450a0a; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>EMOM Superset</h1>
+
+  <div class="preset-section">
+    <label>Quick Presets</label>
+    <div class="preset-chips">
+      <button class="chip" onclick="loadPreset('Pull-ups', 5, 'Push-ups', 10)">Nickels & Dimes</button>
+      <button class="chip" onclick="loadPreset('Chin-ups', 4, 'Dips', 8)">Chins & Dips</button>
+      <button class="chip" onclick="loadPreset('Inverted Rows', 8, 'Push-ups', 12)">Rows & Push</button>
+      <button class="chip" onclick="loadPreset('Squats', 10, 'Lunges', 10)">Legs (10/10)</button>
+    </div>
+  </div>
+
+  <div class="inputs-grid">
+    <div class="input-group">
+      <label for="ex1-name">Move 1 (Pull)</label>
+      <input type="text" id="ex1-name" value="Pull-ups" />
+    </div>
+    <div class="input-group">
+      <label for="ex1-reps">Reps</label>
+      <input type="number" id="ex1-reps" value="5" min="1" />
+    </div>
+    <div class="input-group">
+      <label for="ex2-name">Move 2 (Push)</label>
+      <input type="text" id="ex2-name" value="Push-ups" />
+    </div>
+    <div class="input-group">
+      <label for="ex2-reps">Reps</label>
+      <input type="number" id="ex2-reps" value="10" min="1" />
+    </div>
+    <div class="input-group">
+      <label for="interval-sec">Interval (Sec)</label>
+      <input type="number" id="interval-sec" value="60" min="10" />
+    </div>
+    <div class="input-group">
+      <label for="total-rounds">Total Rounds</label>
+      <input type="number" id="total-rounds" value="20" min="1" />
+    </div>
+    <div class="input-group">
+      <label for="block-frequency">Rest Every (Rds)</label>
+      <input type="number" id="block-frequency" value="5" min="0" />
+    </div>
+    <div class="input-group">
+      <label for="block-rest-sec">Rest Time (Sec)</label>
+      <input type="number" id="block-rest-sec" value="60" min="0" />
+    </div>
+  </div>
+
+  <div class="display" id="display-box">
+    <span class="status-badge" id="status-badge">READY</span>
+    <div class="timer" id="timer">01:00</div>
+    <div class="round-info" id="round-text">Round: 0 / 20</div>
+    <div class="current-task" id="task-text">Select options and hit Start</div>
+  </div>
+
+  <div class="stats">
+    <div>Total <span id="stat-ex1-name">Pull-ups</span>: <span id="stat-ex1-count">0</span></div>
+    <div>Total <span id="stat-ex2-name">Push-ups</span>: <span id="stat-ex2-count">0</span></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-start" id="start-btn">Start</button>
+    <button class="btn btn-pause" id="pause-btn" style="display: none;">Pause</button>
+    <button class="btn btn-reset" id="reset-btn">Reset</button>
+  </div>
+</div>
+
+<script>
+  let wakeLock = null;
+  async function activateWakeLock() {
+    try {
+      if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+    } catch (e) {}
+  }
+  function releaseWakeLock() {
+    if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  }
+
+  let timerInterval = null;
+  let remainingSeconds = 60;
+  let currentRound = 0;
+  let isRunning = false;
+  let isBlockRest = false;
+
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  function beep(freq = 600, duration = 0.15) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+
+  function loadPreset(name1, reps1, name2, reps2) {
+    if (isRunning) return;
+    document.getElementById('ex1-name').value = name1;
+    document.getElementById('ex1-reps').value = reps1;
+    document.getElementById('ex2-name').value = name2;
+    document.getElementById('ex2-reps').value = reps2;
+    updateDisplay();
+  }
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function updateDisplay() {
+    document.getElementById('timer').textContent = formatTime(remainingSeconds);
+    const totalRounds = parseInt(document.getElementById('total-rounds').value, 10) || 0;
+    const badge = document.getElementById('status-badge');
+    const taskText = document.getElementById('task-text');
+    const displayBox = document.getElementById('display-box');
+
+    const ex1 = document.getElementById('ex1-name').value;
+    const r1 = parseInt(document.getElementById('ex1-reps').value, 10) || 0;
+    const ex2 = document.getElementById('ex2-name').value;
+    const r2 = parseInt(document.getElementById('ex2-reps').value, 10) || 0;
+
+    document.getElementById('stat-ex1-name').textContent = ex1;
+    document.getElementById('stat-ex2-name').textContent = ex2;
+    document.getElementById('stat-ex1-count').textContent = Math.max(0, currentRound * r1);
+    document.getElementById('stat-ex2-count').textContent = Math.max(0, currentRound * r2);
+
+    if (!isRunning && currentRound === 0) {
+      badge.textContent = 'READY';
+      badge.className = 'status-badge';
+      displayBox.className = 'display';
+      taskText.textContent = 'Select options and hit Start';
+      taskText.className = 'current-task';
+      document.getElementById('round-text').textContent = `Round: 0 / ${totalRounds}`;
+      return;
+    }
+
+    document.getElementById('round-text').textContent = `Round: ${currentRound} / ${totalRounds}`;
+
+    if (isBlockRest) {
+      badge.textContent = 'BLOCK REST';
+      badge.className = 'status-badge rest';
+      displayBox.className = 'display resting';
+      taskText.textContent = 'Recover & Hydrate';
+      taskText.className = 'current-task rest-mode';
+    } else {
+      badge.textContent = 'WORK';
+      badge.className = 'status-badge work';
+      displayBox.className = 'display working';
+      taskText.textContent = `${r1} ${ex1} + ${r2} ${ex2}`;
+      taskText.className = 'current-task';
+    }
+  }
+
+  function tick() {
+    remainingSeconds--;
     body {
       background: var(--bg);
       color: var(--text);
